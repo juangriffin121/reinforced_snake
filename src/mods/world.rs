@@ -1,8 +1,11 @@
 use super::snake::Snake;
 use super::user::User;
+use super::utils::graph_ascii;
 use rand::seq::SliceRandom;
-use rand::Rng;
-use std::io;
+use rand::{thread_rng, Rng};
+use std::io::Write;
+use std::io::{self, stdout};
+use std::time::{Duration, Instant};
 
 pub struct World {
     pub grid_shape: (i32, i32),
@@ -15,6 +18,10 @@ pub struct World {
 pub enum BorderType {
     Donut,
     Death,
+}
+
+pub enum GraphMethod {
+    ASCII,
 }
 
 impl World {
@@ -34,7 +41,7 @@ impl World {
         }
     }
 
-    pub fn new_food(&mut self, snake: Snake, rng: &mut impl Rng) {
+    pub fn new_food(&mut self, snake: &Snake, rng: &mut impl Rng) {
         let free_squares: Vec<&(i32, i32)> = self
             .grid
             .iter()
@@ -48,16 +55,26 @@ impl World {
         if let Some(&random_coordinate) = free_squares.choose(rng) {
             self.food = *random_coordinate;
         } else {
-            println!("no squares left")
+        }
+    }
+
+    pub fn graph(&self, snake: &Snake, method: GraphMethod) {
+        match method {
+            GraphMethod::ASCII => graph_ascii(self, snake),
         }
     }
 
     pub fn run<U: User>(&mut self, snake: &mut Snake, user: &U) {
+        let mut rng = thread_rng();
         while !self.end {
             if let Some(direction) = user.get_direction() {
-                snake.direction = direction;
+                write!(io::stdout(), "{}", format!("{:?}", direction)).expect("nonsense");
+                snake.update_direction(direction);
+            } else {
+                write!(io::stdout(), "got nothing\r\n").expect("nonsense")
             };
-            self.end = snake.step(&*self);
+            self.end = snake.step(self, &mut rng);
+            self.graph(snake, GraphMethod::ASCII)
         }
     }
 }

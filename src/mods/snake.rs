@@ -1,7 +1,10 @@
+use rand::Rng;
+
 use super::{
     user::User,
     world::{BorderType, World},
 };
+use std::io::Write;
 
 pub struct Snake {
     pub direction: Direction,
@@ -36,26 +39,33 @@ impl Snake {
         };
     }
 
-    pub fn step(&mut self, world: &World) -> bool {
+    pub fn step(&mut self, world: &mut World, rng: &mut impl Rng) -> bool {
         if !self.fed {
             self.squares.pop();
         }
         let new_square = match self.direction {
-            Direction::Up => (self.squares[0].0, self.squares[0].1 + 1),
-            Direction::Down => (self.squares[0].0, self.squares[0].1 - 1),
+            Direction::Up => (self.squares[0].0, self.squares[0].1 - 1),
+            Direction::Down => (self.squares[0].0, self.squares[0].1 + 1),
             Direction::Left => (self.squares[0].0 - 1, self.squares[0].1),
             Direction::Right => (self.squares[0].0 + 1, self.squares[0].1),
         };
         let mut died = self.squares.iter().any(|&square| square == new_square);
         let (max_x, max_y) = world.grid_shape;
         let new_square = match world.borders {
-            BorderType::Donut => (new_square.0 % max_x, new_square.0 % max_y),
+            BorderType::Donut => (
+                (new_square.0 + max_x) % max_x,
+                (new_square.1 + max_y) % max_y,
+            ),
             BorderType::Death => {
                 died = true;
                 new_square
             }
         };
         self.fed = new_square == world.food;
+        if self.fed {
+            world.new_food(&*self, rng)
+        }
+
         self.squares.insert(0, new_square);
         died
     }
