@@ -17,7 +17,7 @@ pub trait User {
 pub struct SyncUser;
 impl User for SyncUser {
     fn get_direction(&self) -> Option<Direction> {
-        let interval = Duration::from_millis(300);
+        let interval = Duration::from_millis(200);
         let now = Instant::now();
         while now.elapsed() < interval {
             let timeout = interval - now.elapsed();

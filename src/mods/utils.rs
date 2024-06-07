@@ -1,8 +1,14 @@
 use std::io::{self, Write};
 
+use crossterm::{
+    execute,
+    terminal::{Clear, ClearType},
+};
+
 use super::{snake::Snake, world::World};
 
 pub fn graph_ascii(world: &World, snake: &Snake) {
+    execute!(io::stdout(), Clear(ClearType::All)).unwrap();
     let mut txt = String::new();
     let (width, height) = world.grid_shape;
 
